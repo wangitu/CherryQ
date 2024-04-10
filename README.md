@@ -57,7 +57,7 @@ python preprocess.py \
 ```
 
 ## Estimate parameter impact on model performance
-To obtain the cherry indices that have the highest impact on model performance， run the following command:
+To obtain the cherry indices that have the highest impact on model performance, run the following command:
 ```Bash
 python estimate_impact.py \
     --base_model <model to be estimated, e.g. NousResearch/Llama-2-7b-hf> \
@@ -96,7 +96,7 @@ python evaluate_perplexity.py \
 ```
 
 Here are the main results of CherryQ on C4 and WikiText-2 across different model scales and
-different group size. For more training and evaluation details, please refer to our [paper](https://arxiv.org/pdf/2404.02837.pdf).
+different group sizes. For more training and evaluation details, please refer to our [paper](https://arxiv.org/pdf/2404.02837.pdf).
 
 ### 3bit quantization on LLaMA2 models
 
