@@ -1,0 +1,69 @@
+fsdp_config (`str` or `dict`, *optional*):
+    Config to be used with fsdp (Pytorch Distributed Parallel Training). The value is either a location of
+    deepspeed json config file (e.g., `ds_config.json`) or an already loaded json file as `dict`.
+
+    A List of config and its options:
+        - min_num_params (`int`, *optional*, defaults to `0`):
+            FSDP's minimum number of parameters for Default Auto Wrapping. (useful only when `fsdp` field is
+            passed).
+        - transformer_layer_cls_to_wrap (`List[str]`, *optional*):
+            List of transformer layer class names (case-sensitive) to wrap, e.g, `BertLayer`, `GPTJBlock`,
+            `T5Block` .... (useful only when `fsdp` flag is passed).
+        - backward_prefetch (`str`, *optional*)
+            FSDP's backward prefetch mode. Controls when to prefetch next set of parameters (useful only when
+            `fsdp` field is passed).
+
+            A list of options along the following:
+
+            - `"backward_pre"` : Prefetches the next set of parameters before the current set of parameter's
+                gradient
+                computation.
+            - `"backward_post"` : This prefetches the next set of parameters after the current set of
+                parameter’s
+                gradient computation.
+        - forward_prefetch (`bool`, *optional*, defaults to `False`)
+            FSDP's forward prefetch mode (useful only when `fsdp` field is passed).
+                If `"True"`, then FSDP explicitly prefetches the next upcoming all-gather while executing in the
+                forward pass.
+        - limit_all_gathers (`bool`, *optional*, defaults to `False`)
+            FSDP's limit_all_gathers (useful only when `fsdp` field is passed).
+                If `"True"`, FSDP explicitly synchronizes the CPU thread to prevent too many in-flight
+                all-gathers.
+        - use_orig_params (`bool`, *optional*, defaults to `False`)
+            If `"True"`, allows non-uniform `requires_grad` during init, which means support for interspersed
+            frozen and trainable paramteres. Useful in cases such as parameter-efficient fine-tuning. Please
+            refer this
+            [blog](https://dev-discuss.pytorch.org/t/rethinking-pytorch-fully-sharded-data-parallel-fsdp-from-first-principles/1019
+        - sync_module_states (`bool`, *optional*, defaults to `True`)
+            If `"True"`, each individually wrapped FSDP unit will broadcast module parameters from rank 0 to
+            ensure they are the same across all ranks after initialization
+        - xla (`bool`, *optional*, defaults to `False`):
+            Whether to use PyTorch/XLA Fully Sharded Data Parallel Training. This is an experimental feature
+            and its API may evolve in the future.
+        - xla_fsdp_settings (`dict`, *optional*)
+            The value is a dictionary which stores the XLA FSDP wrapping parameters.
+
+            For a complete list of options, please see [here](
+            https://github.com/pytorch/xla/blob/master/torch_xla/distributed/fsdp/xla_fully_sharded_data_parallel.py).
+        - xla_fsdp_grad_ckpt (`bool`, *optional*, defaults to `False`):
+            Will use gradient checkpointing over each nested XLA FSDP wrapped layer. This setting can only be
+            used when the xla flag is set to true, and an auto wrapping policy is specified through
+            fsdp_min_num_params or fsdp_transformer_layer_cls_to_wrap.
+
+fsdp_auto_wrap_policy: https://pytorch.org/tutorials/intermediate/FSDP_adavnced_tutorial.html#transformer-wrapping-policy
+    auto_wrap_policy is one of the FSDP features that make it easy to automatically shard a given model and put the model, optimizer and gradient shards into distinct FSDP units.
+
+fsdp_backward_prefetch_policy: distributed/fsdp/api.py
+    - ``BACKWARD_PRE``: This prefetches the next set of parameters before the
+      current set of parameter's gradient computation. This improves backward
+      pass throughput by overlapping communication (next all-gather) and
+      computation (current gradient computation).
+    - ``BACKWARD_POST``: This prefetches the next set of parameters after the
+      current set of parameter's gradient computation. This may improve
+      backward pass throughput by overlapping communication (current
+      reduce-scatter) and computation (next gradient computation).
+      Specifically, the next all-gather is reordered to be before the current
+      reduce-scatter.
+
+fsdp_state_dict_type: https://pytorch.org/tutorials/intermediate/FSDP_adavnced_tutorial.html#transformer-wrapping-policy
+    When using this configuration, FSDP will allgather model parameters, offloading them to the CPU one by one, only on rank 0. When the state_dict is finally saved, it will only be populated on rank 0 and contain CPU tensors. This avoids potential OOM for models that are larger than a single GPU memory and allows users to checkpoint models whose size is roughly the available CPU RAM on the user’s machine.

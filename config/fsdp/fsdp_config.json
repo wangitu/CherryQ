@@ -1,0 +1,4 @@
+{
+    "backward_prefetch": "backward_pre",
+    "transformer_layer_cls_to_wrap": "LlamaDecoderLayer"
+}

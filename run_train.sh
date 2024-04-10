@@ -1,0 +1,19 @@
+torchrun --nproc_per_node=8 --master_port=14302 train.py \
+    --base_model NousResearch/Llama-2-7b-hf \
+    --data_path data/processed_data/c4_processed_50k \
+    --output_dir output \
+    --num_epochs 1 \
+    --micro_batch_size 8 \
+    --gradient_accumulation_steps 2 \
+    --gradient_checkpointing \
+    --save_steps 500 \
+    --learning_rate 2e-5 \
+    --lr_scheduler_type cosine \
+    --weight_decay 0.0 \
+    --warmup_ratio 0.05 \
+    --min_warmup_ratio 0.1 \
+    --fsdp 'shard_grad_op auto_wrap offload' \
+    --fsdp_config config/fsdp/fsdp_config.json \
+    --w_bits 3 \
+    --group_size 64 \
+    --cherry_indices_file data/cherry_indices/llama2-7b-impact.pt
