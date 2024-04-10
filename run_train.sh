@@ -11,7 +11,7 @@ torchrun --nproc_per_node=8 --master_port=14302 train.py \
     --lr_scheduler_type cosine \
     --weight_decay 0.0 \
     --warmup_ratio 0.05 \
-    --min_warmup_ratio 0.1 \
+    --min_warmup_ratio 0.25 \
     --fsdp 'shard_grad_op auto_wrap offload' \
     --fsdp_config config/fsdp/fsdp_config.json \
     --w_bits 3 \
