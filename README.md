@@ -108,7 +108,7 @@ different group size. For more training and evaluation details, please refer to 
 | OminiQuant   | 7.75             | 6.03                | -              | -                 | 6.98             | 5.28                 | -               | -                  |
 | AWQ          | 7.84             | 6.24                | -              | -                 | 6.94             | 5.32                 | -               | -                  |
 | SqueezeLLM   | 7.51             | 5.96                | -              | -                 | 6.82             | **5.23**             | -               | -                  |
-| **CherryQ**  | **7.39**         | **5.92**            | **7.34**       | **5.86**          | **6.80**         | **5.26**             | **6.76**        | **5.21**           |
+| **CherryQ**  | **7.39**         | **5.92**            | **7.34**       | **5.86**          | **6.80**         | 5.26             | **6.76**        | **5.21**           |
 
 ### 4bit quantization on LLaMA2 models
 
