@@ -1,6 +1,3 @@
-<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-
 # CherryQ
 
 [![Code License](https://img.shields.io/badge/Code%20License-Apache_2.0-green.svg)](https://github.com/tatsu-lab/stanford_alpaca/blob/main/LICENSE)
@@ -14,12 +11,9 @@ Large Language Models](https://arxiv.org/pdf/2404.02837.pdf).
 
 This work reveals the phenomenon of parameter heterogeneity in large language models (LLMs). The heterogeneity lies in that a small subset of ”cherry” parameters exhibit a disproportionately large impact on model performance, while the vast majority of parameters have minimal impact. By utilizing this heterogeneity that is prevalent across different model families, scales, and types, CherryQ is proposed to identify and preserve the critical cherry parameters in high precision while aggressively quantizing the remaining parameters to low precision. It empiricaly outperforms existing quantization approaches in terms of perplexity and downstream task performance.
 
-$$
-\text{Heterogeneity Score} = \frac{\text{Mean}(\mathbf{H}_{ii\text{ top 1\%}})}{\text{Max}(\mathbf{H}_{ii\text{ bottom 99\%}})}
-$$
-
 <p align="center" width="100%">
-<a style="margin-top: 0;"><img src="assets/hscore.png" alt="hscore" style="width: 100%; margin: auto"></a>
+<a><img src="assets/equation5.png" alt="hscore" style="width: 40%; margin: auto"></a>
+<a><img src="assets/hscore.png" alt="hscore" style="width: 100%; margin: auto"></a>
 </p>
 
 ## Installation
@@ -127,6 +121,9 @@ different group size. For more training and evaluation details, please refer to 
 | AWQ         | 7.19             | 5.68                | 6.62             | 5.05                  |
 | **CherryQ** | **7.07**         | **5.58**            | **6.56**         | 4.99                  |
 
+
+## Acknowledgement
+This code is partially based on [LLM-QAT](https://github.com/facebookresearch/LLM-QAT) repo.
 
 
 ## Citation
