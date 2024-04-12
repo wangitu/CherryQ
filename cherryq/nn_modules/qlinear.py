@@ -122,7 +122,7 @@ class QuantLinear(nn.Module):
             weight = torch.bitwise_right_shift(
                 torch.unsqueeze(self.qweight, 2).expand(-1, -1, 8 // self.w_bits), # (out, in // 8 * self.w_bits, 8 // self.w_bits)
                 wf # (1, 1, 8 // self.w_bits)
-            ).to(torch.uint8)
+            ).to(torch.int16 if self.w_bits == 8 else torch.int8)
             weight = torch.bitwise_and(weight, (2 ** self.w_bits) - 1)
         elif self.w_bits == 3:
             weight = self.qweight.reshape(
