@@ -11,8 +11,6 @@ from tqdm import trange
 import torch
 import torch.nn as nn
 
-from cherryq.models.llama.modeling_llama_quant import LlamaForCausalLM
-
 
 def get_wikitext2(seqlen, model):
     from datasets import load_dataset
@@ -71,7 +69,7 @@ def get_loaders(
     if 'c4' in name:
         return get_c4(seqlen, model)
     elif 'wikitext2' in name:
-        return get_c4(seqlen, model)
+        return get_wikitext2(seqlen, model)
     else:
         raise ValueError(f"Unsupported dataset {name}.")
 
@@ -101,16 +99,16 @@ def main(
     tokenizer_path: str,
     quant_model_path: str
 ):
-    model = LlamaForCausalLM.from_pretrained(
-        quant_model_path, torch_dtype=torch.float16, device_map={'': 0}
-    )
+    from cherryq.utils import from_quantized
+    model = from_quantized(quant_model_path, torch_dtype=torch.float16, device_map={'': 0})
     model.eval()
     model.config.use_cache = False
 
-    print('c4:')
-    eval_ppl(model, get_loaders('c4', model=tokenizer_path))
-    print('wikitext2:')
-    eval_ppl(model, get_loaders('wikitext2', model=tokenizer_path))
+    from cherryq.nn_modules.qlinear import QuantLinear
+    
+    with QuantLinear.dmode(layerwise_dequantize=False):
+        eval_ppl(model, get_loaders('c4', model=tokenizer_path))
+        eval_ppl(model, get_loaders('wikitext2', model=tokenizer_path))
     
     
 if __name__ == '__main__':

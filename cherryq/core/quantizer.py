@@ -1,4 +1,10 @@
+from typing import Optional
+from collections import namedtuple
+
 import torch
+
+
+iinfo = namedtuple("iinfo", ["min", "max"])
 
 
 def get_max_input(input, clip_val, layerwise):
@@ -28,11 +34,11 @@ def get_max_input(input, clip_val, layerwise):
     return max_input
 
 
-class RestrictedSymQuantizer(torch.autograd.Function):
-    """
-    uniform quantization with restricted range [-(2 ** (num_bits - 1) - 1), 2 ** (num_bits - 1) - 1]
-    """
-    
+class Quantizer:
+    @staticmethod
+    def iinfo(num_bits) -> iinfo:
+        ...
+        
     @staticmethod
     def get_scaling_factor(input, clip_val, num_bits, layerwise):
         """
@@ -41,6 +47,34 @@ class RestrictedSymQuantizer(torch.autograd.Function):
         :param quant_bits: number of bits
         :return: scaling factor
         """
+
+    @staticmethod
+    def quantize(input, S, num_bits):
+        ...
+    
+    @staticmethod
+    def dequantize(rounded_input, S):
+        ...
+        
+    @staticmethod
+    def transform(input, S, num_bits):
+        ...
+    
+
+class RestrictedSymQuantizer(Quantizer, torch.autograd.Function):
+    """
+    uniform quantization with restricted range [-(2 ** (num_bits - 1) - 1), 2 ** (num_bits - 1) - 1]
+    """
+    
+    @staticmethod
+    def iinfo(num_bits):
+        return iinfo(
+            min=-(2 ** (num_bits - 1) - 1),
+            max=2 ** (num_bits - 1) - 1
+        )
+    
+    @staticmethod
+    def get_scaling_factor(input, clip_val, num_bits, layerwise):
         max_input = get_max_input(input, clip_val, layerwise)
         s = (max_input + 1e-6) / (2 ** (num_bits - 1) - 1)
         return s
@@ -49,11 +83,22 @@ class RestrictedSymQuantizer(torch.autograd.Function):
     def quantize(input, S, num_bits):
         s = S.expand_as(input)
         q_range = [-(2 ** (num_bits - 1) - 1), 2 ** (num_bits - 1) - 1]
+        return torch.clamp(torch.round((input / s).float()), q_range[0], q_range[1]).to(torch.int32)
+    
+    @staticmethod
+    def dequantize(rounded_input, S):
+        s = S.expand_as(rounded_input)
+        return rounded_input.to(s.dtype) * s
+    
+    @staticmethod
+    def transform(input, S, num_bits):
+        s = S.expand_as(input)
+        q_range = [-(2 ** (num_bits - 1) - 1), 2 ** (num_bits - 1) - 1]
         rounded_input = torch.clamp(torch.round(input / s), q_range[0], q_range[1])
         return rounded_input * s
 
     @staticmethod
-    def forward(ctx, input, clip_val, num_bits, layerwise, S=None):
+    def forward(ctx, input, clip_val, num_bits, layerwise, S: Optional[torch.Tensor]=None):
         """
         Backward compatibility for naive QAT
         :param input: tensor to be quantized
@@ -88,10 +133,17 @@ class RestrictedSymQuantizer(torch.autograd.Function):
         return grad_input, None, None, None, None
     
 
-class FullSymQuantizer(torch.autograd.Function):
+class FullSymQuantizer(Quantizer, torch.autograd.Function):
     """
     uniform quantization with full range [-(2 ** (num_bits - 1)), 2 ** (num_bits - 1) - 1]
-    """   
+    """
+     
+    @staticmethod
+    def iinfo(num_bits):
+        return iinfo(
+            min=-(2 ** (num_bits - 1)),
+            max=2 ** (num_bits - 1) - 1
+        )
     
     @staticmethod
     def get_scaling_factor(input, clip_val, num_bits, layerwise):
@@ -103,11 +155,22 @@ class FullSymQuantizer(torch.autograd.Function):
     def quantize(input, S, num_bits):
         s = S.expand_as(input)
         qmax = 2 ** (num_bits - 1) - 1e-2
+        return torch.round((torch.clamp((input / s).float(), -qmax, qmax)) - 0.5).to(torch.int32)
+    
+    @staticmethod
+    def dequantize(rounded_input, S):
+        s = S.expand_as(rounded_input)
+        return (rounded_input.to(s.dtype) + 0.5) * s
+    
+    @staticmethod
+    def transform(input, S, num_bits):
+        s = S.expand_as(input)
+        qmax = 2 ** (num_bits - 1) - 1e-2
         rounded_input = torch.round(torch.clamp(input / s, -qmax, qmax) - 0.5)
         return (rounded_input + 0.5) * s
     
     @staticmethod
-    def forward(ctx, input, clip_val, num_bits, layerwise, S=None):
+    def forward(ctx, input, clip_val, num_bits, layerwise, S: Optional[torch.Tensor]=None):
         """
         Backward compatibility for naive QAT
         :param input: tensor to be quantized

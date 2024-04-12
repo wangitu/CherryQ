@@ -9,6 +9,7 @@ from cherryq.core.cherry_linear import QuantLinear
 from cherryq.models.llama.configuration_llama_quant import LlamaConfig
 from cherryq.models.llama.modeling_llama_quant import LlamaForCausalLM
 from cherryq.training.trainer import Trainer
+from cherryq.utils import pack_model, save_quantized
 import utils
 
 logger = utils.get_logger(__name__)
@@ -125,11 +126,13 @@ def train(
         gradient_checkpointing=gradient_checkpointing,
     )
     
+    
     if cherryq:
         cherry_indices_mapping = torch.load(cherry_indices_file)
         for name, module in model.named_modules():
             if isinstance(module, QuantLinear):
                 module.register_cherry_indices(cherry_indices_mapping[name])
+    
                 
     trainer = Trainer(
         model=model,
@@ -142,9 +145,16 @@ def train(
     trainer.train(resume_from_checkpoint=resume_from_checkpoint)
     trainer.save_model()
 
+    
+    if device_id == 0:
+        model = LlamaForCausalLM.from_pretrained(
+            output_dir, torch_dtype=torch.float16
+        )
+        pack_model(model)
+        save_quantized(model, output_dir)
+        
 
 if __name__ == "__main__":
     import fire
     
     fire.Fire(train)
-    

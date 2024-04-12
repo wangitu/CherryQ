@@ -33,7 +33,7 @@ class QuantLinear(nn.Linear):
                 self.num_cherries = math.ceil(self.weight.shape[-1] * cherry_fraction) // 8 * 8
                 self.register_buffer("cherry_indices", -torch.ones(*self.weight.shape[:-1], self.num_cherries, dtype=torch.int32))
                 self.cherry_indices_registered = False
-            self.quantizer_cls = RestrictedSymQuantizer if self.w_bits > 4 else FullSymQuantizer
+            self.quantizer = RestrictedSymQuantizer if self.w_bits > 4 else FullSymQuantizer
             self.dequantized = False
             
     def init_weights_(self):
@@ -42,7 +42,7 @@ class QuantLinear(nn.Linear):
     def _expand_scaling_factors(self, s, weight):
         if s.ndimension() == 0 or s.shape[-1] == 1:
             return s.expand_as(weight)
-        else: # block
+        else: # group
             return s.repeat_interleave(repeats=self.group_size, dim=-1)[:, :weight.shape[-1]] # (out, in)
     
     @torch.inference_mode()
@@ -54,8 +54,8 @@ class QuantLinear(nn.Linear):
             self.weight.data.copy_(self._adjust_weight(weight, ste=False))
         else:
             weight = weight.reshape(weight.shape[0], -1, self.group_size)
-            s = self.quantizer_cls.get_scaling_factor(weight, None, self.w_bits, self.weight_layerwise)
-            self.weight.data.copy_(self.quantizer_cls.quantize(weight, s, self.w_bits).flatten(1))
+            s = self.quantizer.get_scaling_factor(weight, None, self.w_bits, self.weight_layerwise)
+            self.weight.data.copy_(self.quantizer.transform(weight, s, self.w_bits).flatten(1))
         
         self.dequantized = True
         return self.weight
@@ -65,6 +65,14 @@ class QuantLinear(nn.Linear):
         
         self.cherry_indices = cherry_indices.to(dtype=torch.int32, device=self.weight.device)
         self.cherry_indices_registered = True
+        
+    def _get_scaling_factors(self, weight):
+        scaling_factors = []
+        for i in range(0, weight.shape[-1], self.group_size):
+            scaling_factors.append(
+                self.quantizer.get_scaling_factor(weight[:, i: i + self.group_size], None, self.w_bits, self.weight_layerwise)
+            )
+        return torch.cat(scaling_factors, dim=-1) # (out, num_group)
         
     def _adjust_weight(self, weight: torch.Tensor, ste=True):
         """
@@ -78,15 +86,10 @@ class QuantLinear(nn.Linear):
         quant_indices = torch.ones_like(weight, dtype=torch.bool).scatter(-1, cherry_indices, 0)
         quant_weight = weight.detach()[quant_indices].reshape(weight.shape[0], -1)
         
-        scaling_factors = []
-        for i in range(0, quant_weight.shape[-1], self.group_size):
-            scaling_factors.append(
-                self.quantizer_cls.get_scaling_factor(quant_weight[:, i: i + self.group_size], None, self.w_bits, self.weight_layerwise)
-            )
-        s = torch.cat(scaling_factors, dim=-1) # (out, num_block)
+        s = self._get_scaling_factors(quant_weight) # (out, num_group)
         s = self._expand_scaling_factors(s, quant_weight)
             
-        quant_weight = self.quantizer_cls.quantize(quant_weight, s, self.w_bits) # (out, num_block * group_size)
+        quant_weight = self.quantizer.transform(quant_weight, s, self.w_bits) # (out, num_group * group_size)
         real_weight = weight.detach().clone()
         real_weight[quant_indices] = quant_weight.flatten()
         
@@ -110,16 +113,16 @@ class QuantLinear(nn.Linear):
                     real_weight = self.prepare_weight_for_inference(real_weight)
             else: # naive QAT
                 if self.training:
-                    real_weight = real_weight.reshape(real_weight.shape[0], -1, self.group_size) # (out, num_block, group_size)
-                    s = self.quantizer_cls.get_scaling_factor(real_weight, None, self.w_bits, self.weight_layerwise) # (out, num_block, 1)
+                    real_weight = real_weight.reshape(real_weight.shape[0], -1, self.group_size) # (out, num_group, group_size)
+                    s = self.quantizer.get_scaling_factor(real_weight, None, self.w_bits, self.weight_layerwise) # (out, num_group, 1)
                 elif not self.dequantized:
                     real_weight = self.prepare_weight_for_inference(real_weight)
             
             if self.training and not self.cherryq:
                 # Backward compatibility for naive QAT
-                weight = self.quantizer_cls.apply(
+                weight = self.quantizer.apply(
                     real_weight, None, self.w_bits, self.weight_layerwise, s
-                ) # (out, num_block, group_size)
+                ) # (out, num_group, group_size)
                 weight = weight.flatten(1) # (out, in)
             else:
                 weight = real_weight
@@ -130,7 +133,6 @@ class QuantLinear(nn.Linear):
         out = nn.functional.linear(input_, weight)
         if self.bias is not None:
             out += self.bias
-
         return out
     
     def forward(self, x: torch.Tensor, **kwargs) -> torch.Tensor:

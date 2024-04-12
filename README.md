@@ -9,10 +9,10 @@ Large Language Models](https://arxiv.org/pdf/2404.02837.pdf).
 
 ## <a id="overview"></a>Overview
 
-This work reveals the phenomenon of parameter heterogeneity in large language models (LLMs). The heterogeneity lies in that a small subset of ”cherry” parameters exhibit a disproportionately large impact on model performance, while the vast majority of parameters have minimal impact. By utilizing this heterogeneity that is prevalent across different model families, scales, and types, CherryQ is proposed to identify and preserve the critical cherry parameters in high precision while aggressively quantizing the remaining parameters to low precision. It empiricaly outperforms existing quantization approaches in terms of perplexity and downstream task performance.
+This work reveals the phenomenon of parameter heterogeneity in large language models (LLMs). The heterogeneity lies in that a small subset of ”cherry” parameters exhibit a disproportionately large impact on model performance, while the vast majority of parameters have minimal impact. By utilizing this heterogeneity that is prevalent across different model families, scales, and types, CherryQ is proposed to identify and preserve the critical cherry parameters in high precision while aggressively quantizing the remaining parameters to low precision. It empirically outperforms existing quantization approaches in terms of perplexity and downstream task performance.
 
 <p align="center" width="100%">
-<a><img src="assets/equation5.png" alt="hscore" style="width: 40%; margin: auto"></a>
+<a><img src="assets/equation5.png" alt="equation5" style="width: 40%; margin: auto"></a>
 <a><img src="assets/hscore.png" alt="hscore" style="width: 100%; margin: auto"></a>
 </p>
 
@@ -116,10 +116,15 @@ different group sizes. For more training and evaluation details, please refer to
 |:-------------|------------------|---------------------|------------------|-----------------------|
 | FP16        | 6.47             | 4.88                | 6.47             | 4.88                  |
 | QAT         | 7.29             | 5.81                | 6.67             | 5.12                  |
-| GPTQ        | 7.30             | 5.73                | 6.63             | 4.97                  |
+| GPTQ        | 7.30             | 5.73                | 6.63             | 4.98                  |
 | OminiQuant  | 7.12             | 5.58                | 6.56             | **4.95**              |
-| AWQ         | 7.19             | 5.68                | 6.62             | 5.05                  |
+| AWQ         | 7.19             | 5.68                | 6.62             | 4.97                  |
 | **CherryQ** | **7.07**         | **5.58**            | **6.56**         | 4.99                  |
+
+
+## TODO
+
+- [ ] Optimized CUDA kernel for mixed-precision inference
 
 
 ## Acknowledgement
