@@ -83,7 +83,7 @@ class QuantLinear(nn.Module):
         
         i = 0
         row = 0
-        qweight = np.zeros((intweight.shape[0] // 8 * self.w_bits, intweight.shape[1]), dtype=np.uint8) # (num_normal // 8 * w_bits, out)
+        qweight = np.zeros((intweight.shape[0] // 8 * self.w_bits, intweight.shape[1]), dtype=np.int8) # (num_normal // 8 * w_bits, out)
         if self.w_bits in [2, 4, 8]:
             while row < qweight.shape[0]:
                 for j in range(i, i + (8 // self.w_bits)):
@@ -113,7 +113,7 @@ class QuantLinear(nn.Module):
         else:
             raise NotImplementedError(f"{self.w_bits} bit is not implemented yet.")
         
-        self.qweight = torch.from_numpy(qweight.astype(np.int8).T) # (out, num_normal // 8 * w_bits)
+        self.qweight = torch.from_numpy(qweight.T) # (out, num_normal // 8 * w_bits)
     
     @torch.inference_mode()
     def unpack(self):

@@ -1,5 +1,8 @@
 accelerate==0.27.2
 datasets==2.18.0
+fire==0.5.0
 flash_attn==2.5.5
+numpy==1.22.0
 torch==2.2.1
+tqdm==4.66.1
 transformers==4.38.2

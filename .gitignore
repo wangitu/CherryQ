@@ -164,4 +164,4 @@ cython_debug/
 
 output/
 wandb/
-*test.py
+*test*.py
