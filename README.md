@@ -87,28 +87,3 @@ python evaluate_perplexity.py \
     <tokenizer name or path, e.g. NousResearch/Llama-2-7b-hf> \
     <directory where the model checkpoints are written>
 ```
-
-Here are the main results of CherryQ on C4 and WikiText-2 across different model scales and different group sizes. For more training and evaluation details, please refer to our paper.
-
-### 3bit quantization on LLaMA2 models
-
-| Method       | 7B-3bit-g128 c4 | 7B-3bit-g128 wiki2 | 7B-3bit-g64 c4 | 7B-3bit-g64 wiki2 | 13B-3bit-g128 c4 | 13B-3bit-g128 wiki2 | 13B-3bit-g64 c4 | 13B-3bit-g64 wiki2 |
-|:--------------|------------------|---------------------|----------------|-------------------|------------------|----------------------|-----------------|--------------------|
-| FP16         | 6.97             | 5.47                | 6.97           | 5.47              | 6.47             | 4.88                 | 6.47            | 4.88               |
-| QAT          | 9.25             | 6.90                | 8.74           | 7.13              | 7.19             | 5.63                 | 7.02            | 5.48               |
-| GPTQ         | 8.28             | 6.74                | 8.20           | 6.62              | 7.24             | 5.63                 | 7.10            | 5.56               |
-| OminiQuant   | 7.75             | 6.03                | -              | -                 | 6.98             | 5.28                 | -               | -                  |
-| AWQ          | 7.84             | 6.24                | -              | -                 | 6.94             | 5.32                 | -               | -                  |
-| SqueezeLLM   | 7.51             | 5.96                | -              | -                 | 6.82             | **5.23**             | -               | -                  |
-| **CherryQ**  | **7.39**         | **5.92**            | **7.34**       | **5.86**          | **6.80**         | 5.26             | **6.76**        | **5.21**           |
-
-### 4bit quantization on LLaMA2 models
-
-| Method      | 7B-4bit-g128 c4 | 7B-4bit-g128 wiki2 | 13B-4bit-g128 c4 | 13B-4bit-g128 wiki2 |
-|:-------------|------------------|---------------------|------------------|-----------------------|
-| FP16        | 6.97             | 5.47                | 6.47             | 4.88                  |
-| QAT         | 7.29             | 5.81                | 6.67             | 5.12                  |
-| GPTQ        | 7.30             | 5.73                | 6.63             | 4.97                  |
-| OminiQuant  | 7.12             | 5.58                | 6.56             | **4.95**              |
-| AWQ         | 7.13             | 5.62                | 6.56             | 4.97                  |
-| **CherryQ** | **7.07**         | **5.58**            | **6.56**         | 4.99                  |
