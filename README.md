@@ -1,12 +1,5 @@
 # CherryQ
 
-[![Code License](https://img.shields.io/badge/Code%20License-Apache_2.0-green.svg)](https://github.com/tatsu-lab/stanford_alpaca/blob/main/LICENSE)
-[![Data License](https://img.shields.io/badge/Data%20License-CC%20By%20NC%204.0-red.svg)](https://github.com/tatsu-lab/stanford_alpaca/blob/main/DATA_LICENSE)
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/release/python-3100/)
-
-This is the repository for [Cherry on Top: Parameter Heterogeneity and Quantization in
-Large Language Models](https://arxiv.org/pdf/2404.02837.pdf).
-
 ## <a id="overview"></a>Overview
 
 This work reveals the phenomenon of parameter heterogeneity in large language models (LLMs). The heterogeneity lies in that a small subset of ”cherry” parameters exhibit a disproportionately large impact on model performance, while the vast majority of parameters have minimal impact. By utilizing this heterogeneity that is prevalent across different model families, scales, and types, CherryQ is proposed to identify and preserve the critical cherry parameters in high precision while aggressively quantizing the remaining parameters to low precision. It empirically outperforms existing quantization approaches in terms of perplexity and downstream task performance.
@@ -67,7 +60,7 @@ python estimate_impact.py \
 
 ## Training
 
-For all LLM scales (7B, 13B), and both base models and chat models (LLaMA2, Vicuna-v1.5), we train the models on a single node with 8 x A800 80GiB GPUs. We use a total batch size of 128, a learning rate of 2e-5, a weight decay of 0.0, a cosine scheduler with 5% warm-up steps. The rest of hyperparameter used in training across different models are as follows:
+For all LLM scales (7B, 13B), and both base models and chat models (LLaMA2, Vicuna-v1.5), we train the models on a single node with 8 x A100 80GiB GPUs. We use a total batch size of 128, a learning rate of 2e-5, a weight decay of 0.0, a cosine scheduler with 5% warm-up steps. The rest of hyperparameter used in training across different models are as follows:
 
 | Model & bit | num_epochs | micro_batch_size | gradient_accumulation_steps | min_warmup_ratio |
 | :--- | :---: | :---: | :---: | :---: |
@@ -95,8 +88,7 @@ python evaluate_perplexity.py \
     <directory where the model checkpoints are written>
 ```
 
-Here are the main results of CherryQ on C4 and WikiText-2 across different model scales and
-different group sizes. For more training and evaluation details, please refer to our [paper](https://arxiv.org/pdf/2404.02837.pdf).
+Here are the main results of CherryQ on C4 and WikiText-2 across different model scales and different group sizes. For more training and evaluation details, please refer to our paper.
 
 ### 3bit quantization on LLaMA2 models
 
@@ -120,25 +112,3 @@ different group sizes. For more training and evaluation details, please refer to
 | OminiQuant  | 7.12             | 5.58                | 6.56             | **4.95**              |
 | AWQ         | 7.13             | 5.62                | 6.56             | 4.97                  |
 | **CherryQ** | **7.07**         | **5.58**            | **6.56**         | 4.99                  |
-
-
-## TODO
-
-- [ ] Optimized CUDA kernel for mixed-precision inference
-
-
-## Acknowledgement
-This code is partially based on [LLM-QAT](https://github.com/facebookresearch/LLM-QAT) repo.
-
-
-## Citation
-
-If you find this codebase useful in your research, please cite the following paper.
-```
-@article{cui2024cherry,
-  title={Cherry on Top: Parameter Heterogeneity and Quantization in Large Language Models},
-  author={Cui, Wanyun and Wang, Qianle},
-  journal={arXiv preprint arXiv:2404.02837},
-  year={2024}
-}
-```
